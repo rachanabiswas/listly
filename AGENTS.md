@@ -44,6 +44,15 @@ See existing examples under `src/components/Auth/`.
 
 <!-- END:form-patterns -->
 
+<!-- BEGIN:zod-v4 -->
+
+# Zod 4 API differences
+
+- Email: use `z.email("message")` — **not** `z.string().email("message")` (that was Zod 3).
+- Other string formats are also standalone: `z.uuid()`, `z.url()`, `z.ipv4()`, etc.
+
+<!-- END:zod-v4 -->
+
 ## Agent behavior
 
 - **Ask questions.** When the request is ambiguous, when there are real implementation choices with tradeoffs, or before any non-obvious / destructive action, use the `question` tool to confirm. Prefer one short batched question over back-and-forth guessing.
