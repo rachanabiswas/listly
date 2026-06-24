@@ -1,4 +1,4 @@
-import LoginForm from "@/components/Auth/LoginForm";
+import RegisterForm from "@/components/Auth/RegisterForm";
 import {
   Card,
   CardContent,
@@ -10,29 +10,30 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Sign In",
-  description: "Sign in to your account",
+  title: "Sign Up",
+  description: "Create a new account",
 };
 
-const LoginPage = () => {
+const RegisterPage = () => {
   return (
     <section className="grid h-dvh place-items-center">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
+          <CardTitle>Create an account</CardTitle>
         </CardHeader>
 
         <CardContent>
-          <LoginForm />
+          <RegisterForm />
         </CardContent>
 
         <CardFooter className="justify-center">
-          <p className="text-muted-foreground text-sm">
-            Don&apos;t have an account?{" "}
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{" "}
             <Link
-              href="/register"
-              className="text-primary font-medium underline-offset-4 hover:underline">
-              Sign up
+              href="/"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Sign in
             </Link>
           </p>
         </CardFooter>
@@ -41,4 +42,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

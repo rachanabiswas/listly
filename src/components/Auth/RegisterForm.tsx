@@ -5,49 +5,68 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Loader2 } from "lucide-react";
-import { loginFormSchema, type LoginFormType } from "@/lib/zodSchema";
+import { registerFormSchema, type RegisterFormType } from "@/lib/zodSchema";
 import { authClient } from "@/lib/auth-client";
 import { Field, FieldError, FieldLabel } from "@/components/shadcnui/field";
 import { Input } from "@/components/shadcnui/input";
-import { Checkbox } from "@/components/shadcnui/checkbox";
 import { Button } from "@/components/shadcnui/button";
 
-const LoginForm = () => {
+const RegisterForm = () => {
   const router = useRouter();
 
   const {
     handleSubmit,
     control,
     formState: { isSubmitting },
-  } = useForm<LoginFormType>({
-    resolver: zodResolver(loginFormSchema),
+  } = useForm<RegisterFormType>({
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
-      rememberMe: false,
+      confirmPassword: "",
     },
     mode: "all",
   });
 
-  const onSubmit = async (data: LoginFormType) => {
-    const { error } = await authClient.signIn.email({
+  const onSubmit = async (data: RegisterFormType) => {
+    const { error } = await authClient.signUp.email({
+      name: data.name,
       email: data.email,
       password: data.password,
-      rememberMe: data.rememberMe,
     });
 
     if (error) {
       toast.error(
-        typeof error === "string" ? error : error.message || "Invalid email or password",
+        typeof error === "string" ? error : error.message || "Failed to create account",
       );
       return;
     }
 
-    router.push("/dashboard");
+    toast.success("Account created! You can now sign in.");
+    router.push("/");
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+      <Controller
+        name="name"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+            <Input
+              {...field}
+              id={field.name}
+              type="text"
+              aria-invalid={fieldState.invalid}
+              autoComplete="name"
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+
       <Controller
         name="email"
         control={control}
@@ -77,7 +96,7 @@ const LoginForm = () => {
               id={field.name}
               type="password"
               aria-invalid={fieldState.invalid}
-              autoComplete="current-password"
+              autoComplete="new-password"
             />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
@@ -85,16 +104,19 @@ const LoginForm = () => {
       />
 
       <Controller
-        name="rememberMe"
+        name="confirmPassword"
         control={control}
-        render={({ field }) => (
-          <Field orientation="horizontal">
-            <Checkbox
-              checked={field.value}
-              onCheckedChange={field.onChange}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={field.name}>Confirm password</FieldLabel>
+            <Input
+              {...field}
               id={field.name}
+              type="password"
+              aria-invalid={fieldState.invalid}
+              autoComplete="new-password"
             />
-            <FieldLabel htmlFor={field.name}>Remember me</FieldLabel>
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
       />
@@ -103,14 +125,14 @@ const LoginForm = () => {
         {isSubmitting ? (
           <>
             <Loader2 className="animate-spin" />
-            Signing in...
+            Creating account...
           </>
         ) : (
-          "Sign in"
+          "Create account"
         )}
       </Button>
     </form>
   );
 };
 
-export default LoginForm;
+export default RegisterForm;

@@ -1,11 +1,10 @@
-import Header from "@/components/Header/Header";
+"use client";
+
 import type { LayoutProps } from "@/lib/types";
 
 const PublicLayout = ({ children }: LayoutProps) => {
   return (
     <>
-      <Header />
-
       <main className="mx-auto max-w-7xl">{children}</main>
     </>
   );

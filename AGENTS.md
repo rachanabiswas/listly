@@ -40,8 +40,6 @@ Each field goes through `Controller`:
 
 Submit: `<form onSubmit={handleSubmit(handler)} noValidate>`. Button disabled while submitting with icon toggle.
 
-See existing examples under `src/components/Auth/`.
-
 <!-- END:form-patterns -->
 
 <!-- BEGIN:zod-v4 -->
@@ -124,3 +122,10 @@ See existing examples under `src/components/Auth/`.
 - `.env` is gitignored; `.env.example` is the committed template. Do not commit secrets.
 - `CHECKPOINT_DISABLE=1` is set to silence Prisma telemetry.
 - No CI workflows or pre-commit hooks exist. Pre-PR verification is `bun lint` then `bun run build` (see Verification above).
+
+## Gotchas
+
+- `typedRoutes: true` means all `<Link href>` and `router.push()` targets must exist as actual route files. A placeholder page is needed for any route that doesn't exist yet.
+- `@prisma/client` is **not** installed — the Prisma client is generated to `@generated/prisma/client` via a custom generator path. If you see `Module '"@prisma/client"' has no exported member 'PrismaClient'`, the import path needs fixing to `@generated/prisma/client`. See `dbClient.ts` for the canonical usage. Ideally, import the singleton from `@/lib/database/dbClient` instead of creating a new `PrismaClient` instance.
+- `react-hook-form` and `@hookform/resolvers` are not pre-installed; add them with `bun add react-hook-form @hookform/resolvers`.
+- Zod 4 `z.boolean().default(false)` creates an input/output type mismatch with `@hookform/resolvers` — the resolver type expects the input type (optional with `| undefined`) but `useForm<T>` uses the output type. Prefer `z.boolean()` (no default) and set the default in `defaultValues` instead.
