@@ -1,16 +1,17 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-import { Loader2 } from "lucide-react";
-import { loginFormSchema, type LoginFormType } from "@/lib/zodSchema";
-import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/shadcnui/button";
+import { Checkbox } from "@/components/shadcnui/checkbox";
 import { Field, FieldError, FieldLabel } from "@/components/shadcnui/field";
 import { Input } from "@/components/shadcnui/input";
-import { Checkbox } from "@/components/shadcnui/checkbox";
-import { Button } from "@/components/shadcnui/button";
+import { authClient } from "@/lib/auth-client";
+import { loginFormSchema, type LoginFormType } from "@/lib/zodSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 const LoginForm = () => {
   const router = useRouter();
@@ -38,7 +39,9 @@ const LoginForm = () => {
 
     if (error) {
       toast.error(
-        typeof error === "string" ? error : error.message || "Invalid email or password",
+        typeof error === "string" ? error : (
+          error.message || "Invalid email or password"
+        ),
       );
       return;
     }
@@ -47,7 +50,10 @@ const LoginForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-4"
+      noValidate>
       <Controller
         name="email"
         control={control}
@@ -84,30 +90,39 @@ const LoginForm = () => {
         )}
       />
 
-      <Controller
-        name="rememberMe"
-        control={control}
-        render={({ field }) => (
-          <Field orientation="horizontal">
-            <Checkbox
-              checked={field.value}
-              onCheckedChange={field.onChange}
-              id={field.name}
-            />
-            <FieldLabel htmlFor={field.name}>Remember me</FieldLabel>
-          </Field>
-        )}
-      />
+      <div className="flex items-center justify-between">
+        <Controller
+          name="rememberMe"
+          control={control}
+          render={({ field }) => (
+            <Field orientation="horizontal">
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                id={field.name}
+              />
+              <FieldLabel htmlFor={field.name}>Remember me</FieldLabel>
+            </Field>
+          )}
+        />
 
-      <Button type="submit" disabled={isSubmitting} className="mt-2 w-full">
-        {isSubmitting ? (
+        <Link
+          href="/forgot-password"
+          className="text-primary text-sm font-medium underline-offset-4 hover:underline">
+          Forgot password?
+        </Link>
+      </div>
+
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="mt-2 w-full">
+        {isSubmitting ?
           <>
             <Loader2 className="animate-spin" />
             Signing in...
           </>
-        ) : (
-          "Sign in"
-        )}
+        : "Sign in"}
       </Button>
     </form>
   );

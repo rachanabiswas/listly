@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ThemeToggleButton from "../Buttons/ThemeToggleButton";
+import SignOutButton from "../Buttons/SignOutButton";
 
 const Header = () => {
   return (
@@ -19,6 +20,8 @@ const Header = () => {
           <Link href={"/"}>Home</Link>
 
           <ThemeToggleButton />
+
+          <SignOutButton />
         </nav>
       </div>
     </header>

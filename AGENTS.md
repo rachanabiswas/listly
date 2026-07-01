@@ -79,7 +79,7 @@ Submit: `<form onSubmit={handleSubmit(handler)} noValidate>`. Button disabled wh
 - `prisma/schema.prisma` has **no** `datasource.url` line. The URL comes from `prisma.config.ts` via `env("DATABASE_URL")` (loaded with `dotenv/config`). Do not add it back inline.
 - `src/lib/database/dbClient.ts` is a `globalThis` singleton (HMR-safe) wired to `PrismaLibSql`. Do not instantiate `PrismaClient` elsewhere; import from this file.
 - `serverEnv.DATABASE_URL` is Zod-validated to start with `file:./` (`src/lib/env/serverEnv.ts`). A non-`file:./` URL throws at boot.
-- No migrations exist yet — `bun migrate` (`prisma migrate dev && prisma generate`) creates `prisma/migrations/`. Schema edits go through that command, not `prisma db push`.
+- Migrations live in `prisma/migrations/`. Schema edits go through `bun migrate` (`prisma migrate dev && prisma generate`), not `prisma db push`.
 - `bun studio` runs headless (`--browser none`); open the printed URL in a browser manually.
 - `generated/**` is gitignored and excluded from ESLint. Do not hand-edit generated files.
 - `build` and `prod` scripts prepend `prisma generate` — running raw `next build` will fail with missing types if the client is stale.
@@ -101,6 +101,27 @@ Submit: `<form onSubmit={handleSubmit(handler)} noValidate>`. Button disabled wh
 
 - `components.json` sets `ui` → `@/components/shadcnui` (not the default `@/components/ui`). Add components with `bunx shadcn add ...`; they land in `src/components/shadcnui/`.
 - The shipped `Button` wraps `Button as ButtonPrimitive` from `@base-ui/react/button`. Do not introduce Radix or `react-aria` primitives — they don't share the Base Luma styling.
+
+## Better Auth (1.6.20)
+
+- Server config: `src/lib/auth.ts` — uses `prismaAdapter` (SQLite), `emailAndPassword.enabled`, `nextCookies()` plugin.
+- Client instance: `src/lib/auth-client.ts` — `createAuthClient()` from `better-auth/react`.
+- Auth API route: `src/app/api/auth/[...all]/route.ts` — single `auth.handler()` export.
+- **Password reset** uses `sendResetPassword` handler (server) + `requestPasswordReset({ email, redirectTo })` on client. The client method is `requestPasswordReset` — **not** `forgetPassword` or `forgotPassword`. Reset: `resetPassword({ newPassword, token })`.
+- **Sign out**: `authClient.signOut()` then `router.push("/")` + `router.refresh()`.
+- Env vars: `BETTER_AUTH_SECRET` (min 32 chars), `BETTER_AUTH_URL` (valid URL, no trailing slash). Both validated in `serverEnv.ts`.
+- Session cookie name: `better-auth.session_token`.
+
+## Route protection pattern
+
+Two layers:
+1. **Optimistic (middleware)** — `src/proxy.ts` checks `better-auth.session_token` cookie; redirects unauthenticated from `/dashboard` → `/`, and authenticated from auth pages → `/dashboard`.
+2. **Authoritative (layout)** — `src/app/(private)/layout.tsx` calls `auth.api.getSession({ headers: await headers() })` server-side; redirects to `/` if null.
+
+## Tailwind v4 notes
+
+- Gradient: use `bg-linear-to-b` (not `bg-gradient-to-b`).
+- Centering a block child in a grid: use `justify-self-center` on the child.
 
 ## Path aliases (`tsconfig.json`)
 
