@@ -11,6 +11,23 @@ datasource db {
   provider = "sqlite"
 }
 
+enum TaskStatus {
+  todo
+  in_progress
+  done
+
+  @@map("task_status")
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+  urgent
+
+  @@map("task_priority")
+}
+
 model User {
   id            String    @id
   name          String
@@ -21,9 +38,26 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  tasks         Task[]
 
   @@unique([email])
   @@map("user")
+}
+
+model Task {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus    @default(todo)
+  priority    TaskPriority  @default(medium)
+  dueDate     DateTime?
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
+  @@map("task")
 }
 
 model Session {

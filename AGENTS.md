@@ -6,13 +6,78 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 <!-- END:nextjs-agent-rules -->
 
-<!-- BEGIN:form-patterns -->
+## Stack
 
-# Form Patterns
+Next.js 16.2 + React 19.2 (App Router, Turbopack, React Compiler on, `typedRoutes` on) · Prisma 7 + libSQL/SQLite · Tailwind v4 (CSS-only, no `tailwind.config.ts`) · shadcn/ui with `base-luma` style preset + `@base-ui/react` primitives (not Radix) · `next-themes` (default `dark`, `enableSystem={false}`) · `better-auth` 1.6.20 · `@t3-oss/env-nextjs` + Zod 4.
+
+## Commands
+
+| Script | What it does |
+|---|---|
+| `bun dev` | Start dev server (Turbopack) |
+| `bun lint` | ESLint with `eslint-config-next` core-web-vitals + typescript |
+| `bun run build` | `prisma generate && next build` — TypeScript errors surface here |
+| `bun prod` | Full: `prisma generate && eslint && next build && next start` |
+| `bun migrate` | `prisma migrate dev && prisma generate` |
+| `bun studio` | Headless Prisma Studio (`--browser none`); open printed URL manually |
+
+Pre-PR verification: `bun lint` then `bun run build`. No test framework exists.
+
+## Prisma (v7, custom output)
+
+- Generator: `provider = "prisma-client"`, `output = "../generated/prisma"` — not `prisma-client-js`.
+- Import client as `import { PrismaClient } from "@generated/prisma/client"`. There is no `@prisma/client` import surface.
+- `schema.prisma` has **no** `datasource.url` — comes from `prisma.config.ts` via `env("DATABASE_URL")` (loaded with `dotenv/config`). Do not add it inline.
+- Singleton: `src/lib/database/dbClient.ts` (HMR-safe `globalThis`, wired to `PrismaLibSql`). Import from there instead of creating new `PrismaClient`.
+- Migrations via `bun migrate` (not `prisma db push`). `generated/**` is gitignored — don't hand-edit.
+
+## Env validation (T3)
+
+- `src/lib/env/serverEnv.ts` — `experimental__runtimeEnv: process.env` (keep `experimental__` prefix verbatim).
+- `src/lib/env/clientEnv.ts` — currently empty (placeholder).
+- `next.config.ts` imports both as side effects at the top for load-time validation.
+- New vars: add to `serverEnv.ts` (server) or `clientEnv.ts` (must be `NEXT_PUBLIC_*`), mirror in `.env.example`.
+- `DATABASE_URL` must start with `file:./` (Zod-validated). `BETTER_AUTH_SECRET` min 32 chars. `BETTER_AUTH_URL` valid URL, no trailing slash.
+
+## Styling
+
+- Tailwind v4 config lives entirely in `src/app/globals.css` via `@theme` and `@custom-variant`. No `tailwind.config.ts`.
+- PostCSS plugin: `@tailwindcss/postcss`. Must keep `@import "shadcn/tailwind.css"` in globals.css for Base Luma tokens.
+- Prettier: `singleAttributePerLine: true`, `bracketSameLine: true`, `experimentalTernaries: true`, `prettier-plugin-tailwindcss`. Output matches these.
+- Gradient utility: use `bg-linear-to-b` (not `bg-gradient-to-b`).
+- Centering block child in grid: `justify-self-center` on child.
+
+## shadcn / Base UI
+
+- `components.json` maps `ui` → `@/components/shadcnui` (not `@/components/ui`). Add with `bunx shadcn add <name>`; they land in `src/components/shadcnui/`.
+- Primitives from `@base-ui/react` — do not introduce Radix or `react-aria`. Existing shipped components: `Button`, `Card`, `Dialog`, `DropdownMenu`, `Field`, `Input`, `Label`, `Separator`, `Textarea`, `Checkbox`, `Combobox`.
+
+## Better Auth
+
+- Server: `src/lib/auth.ts` — `prismaAdapter` (SQLite), `emailAndPassword.enabled`, `nextCookies()` plugin.
+- Client: `src/lib/auth-client.ts` — `createAuthClient()` from `better-auth/react`. Exposes `.useSession()` hook and `.signOut()`.
+- API route: `src/app/api/auth/[...all]/route.ts` — single `auth.handler()` export.
+- Password reset: server `sendResetPassword` handler + client `requestPasswordReset({ email, redirectTo })` (not `forgotPassword`). Actual reset: `resetPassword({ newPassword, token })`.
+- Sign out: `authClient.signOut()` then `router.push("/")` + `router.refresh()`.
+- Session cookie: `better-auth.session_token`.
+
+## Route protection
+
+Two layers:
+1. **Optimistic (middleware)** — `src/proxy.ts` checks `better-auth.session_token` cookie; redirects unauthenticated from `/dashboard` → `/`, authenticated from auth pages → `/dashboard`.
+2. **Authoritative (layout)** — `src/app/(private)/layout.tsx` calls `auth.api.getSession({ headers: await headers() })` server-side; redirects to `/` if null.
+
+## Zod 4 differences
+
+- Email: `z.email("message")` — **not** `z.string().email()` (Zod 3).
+- Other string formats also standalone: `z.uuid()`, `z.url()`, `z.ipv4()`, etc.
+- `z.boolean().default(false)` creates input/output type mismatch with `@hookform/resolvers` — prefer `z.boolean()` with `defaultValues` in `useForm` instead.
+
+## Form patterns
 
 Schemas in `src/lib/zodSchema.ts` — export both schema and `type X = z.infer<typeof xSchema>`.
 
-Components use `"use client"`, `react-hook-form` + `@hookform/resolvers/zod`, and shadcn primitives:
+Components use `"use client"`, `react-hook-form` + `@hookform/resolvers/zod`, and shadcn `Field`/`FieldLabel`/`FieldError` primitives:
 
 ```typescript
 const { handleSubmit, control, formState: { isSubmitting } } = useForm({
@@ -22,131 +87,18 @@ const { handleSubmit, control, formState: { isSubmitting } } = useForm({
 });
 ```
 
-Each field goes through `Controller`:
+Each field through `Controller` with `Field data-invalid`, `FieldLabel`, `aria-invalid`, and `FieldError`. Submit: `<form onSubmit={handleSubmit(handler)} noValidate>`. Button disabled while submitting with icon toggle.
 
-```typescript
-<Controller
-  name="fieldName"
-  control={control}
-  render={({ field, fieldState }) => (
-    <Field data-invalid={fieldState.invalid}>
-      <FieldLabel htmlFor={field.name}>Label</FieldLabel>
-      <Input {...field} id={field.name} aria-invalid={fieldState.invalid} autoComplete="..." />
-      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-    </Field>
-  )}
-/>
-```
-
-Submit: `<form onSubmit={handleSubmit(handler)} noValidate>`. Button disabled while submitting with icon toggle.
-
-<!-- END:form-patterns -->
-
-<!-- BEGIN:zod-v4 -->
-
-# Zod 4 API differences
-
-- Email: use `z.email("message")` — **not** `z.string().email("message")` (that was Zod 3).
-- Other string formats are also standalone: `z.uuid()`, `z.url()`, `z.ipv4()`, etc.
-
-<!-- END:zod-v4 -->
-
-## Agent behavior
-
-- **Ask questions.** When the request is ambiguous, when there are real implementation choices with tradeoffs, or before any non-obvious / destructive action, use the `question` tool to confirm. Prefer one short batched question over back-and-forth guessing.
-- **Remember new learning.** When you discover something non-obvious about this repo — a gotcha, a convention, a fix, a command that wasn't documented — add it back to this file (or a clearly-scoped section) so future sessions benefit. Keep entries concise and high-signal; delete stale ones.
-- **Use available skills and MCPs.** Before writing code for a task that matches a listed skill (e.g. `shadcn`, `prisma-*`, `next-*`, `better-auth-*`, `vercel-react-*`, `zod`, etc.), load it with the `skill` tool. And MCPs that are directly relevant to this stack e.g. **`shadcn`** (local; component registry / audit) and **`better-auth`** (remote; auth setup). Use them when the task fits instead of guessing from training data.
-
-## Stack at a glance
-
-- Next.js 16.2 + React 19.2 (App Router, Turbopack default, React Compiler on, `typedRoutes` on)
-- Prisma 7 with `@prisma/adapter-libsql` (SQLite, file-backed)
-- Tailwind CSS v4 (CSS-only config in `globals.css`; no `tailwind.config.ts`)
-- shadcn/ui with the `base-luma` style preset; primitives from `@base-ui/react` (not Radix)
-- `next-themes` (default `dark`, `enableSystem={false}`), `react-toastify`, `lucide-react`
-- `@t3-oss/env-nextjs` + Zod for env validation
-
-## Verification
-
-- **Primary check**: `bun lint` — runs `eslint` with `eslint-config-next` core-web-vitals + typescript.
-- **Secondary / type gate**: `bun run build`. There is no separate `typecheck` script and no test framework; TypeScript errors surface only during the build.
-- **Full prod check**: `bun prod` — `prisma generate && eslint && next build && next start`. Use before schema or env changes.
-
-## Prisma (Prisma 7, custom output)
-
-- Generator: `provider = "prisma-client"`, `output = "../generated/prisma"`. This is the Prisma 7 generator, **not** `prisma-client-js`.
-- Import the client as `import { PrismaClient } from "@generated/prisma/client"`. There is no `@prisma/client` import surface in this repo.
-- `prisma/schema.prisma` has **no** `datasource.url` line. The URL comes from `prisma.config.ts` via `env("DATABASE_URL")` (loaded with `dotenv/config`). Do not add it back inline.
-- `src/lib/database/dbClient.ts` is a `globalThis` singleton (HMR-safe) wired to `PrismaLibSql`. Do not instantiate `PrismaClient` elsewhere; import from this file.
-- `serverEnv.DATABASE_URL` is Zod-validated to start with `file:./` (`src/lib/env/serverEnv.ts`). A non-`file:./` URL throws at boot.
-- Migrations live in `prisma/migrations/`. Schema edits go through `bun migrate` (`prisma migrate dev && prisma generate`), not `prisma db push`.
-- `bun studio` runs headless (`--browser none`); open the printed URL in a browser manually.
-- `generated/**` is gitignored and excluded from ESLint. Do not hand-edit generated files.
-- `build` and `prod` scripts prepend `prisma generate` — running raw `next build` will fail with missing types if the client is stale.
-
-## Env validation (T3 env)
-
-- `src/lib/env/clientEnv.ts` and `src/lib/env/serverEnv.ts` define Zod schemas via `@t3-oss/env-nextjs`.
-- `serverEnv.ts` uses `experimental__runtimeEnv: process.env`. The `experimental__` prefix is required for non-Next-runtime access — keep it verbatim.
-- `next.config.ts` imports both env files **as side effects** at the top of the module to trigger validation at load time. Do not remove those imports; the rest of the app reads `serverEnv` / `clientEnv` from those modules.
-- New vars: add to `serverEnv.ts` (server) or `clientEnv.ts` (must be `NEXT_PUBLIC_*`) and mirror in `.env.example`.
-
-## Styling
-
-- Tailwind v4: all config lives in `src/app/globals.css` via `@theme` and `@custom-variant`. PostCSS plugin is `@tailwindcss/postcss`. There is no `tailwind.config.ts` — do not create one.
-- `globals.css` imports `shadcn/tailwind.css`; removing it breaks the Base Luma design tokens.
-- Prettier: `singleAttributePerLine: true`, `bracketSameLine: true`, `experimentalTernaries: true`, and `prettier-plugin-tailwindcss` is enabled. New code matches (one prop per line; JSX closing bracket on the same line as the tag).
-
-## shadcn / Base UI
-
-- `components.json` sets `ui` → `@/components/shadcnui` (not the default `@/components/ui`). Add components with `bunx shadcn add ...`; they land in `src/components/shadcnui/`.
-- The shipped `Button` wraps `Button as ButtonPrimitive` from `@base-ui/react/button`. Do not introduce Radix or `react-aria` primitives — they don't share the Base Luma styling.
-
-## Better Auth (1.6.20)
-
-- Server config: `src/lib/auth.ts` — uses `prismaAdapter` (SQLite), `emailAndPassword.enabled`, `nextCookies()` plugin.
-- Client instance: `src/lib/auth-client.ts` — `createAuthClient()` from `better-auth/react`.
-- Auth API route: `src/app/api/auth/[...all]/route.ts` — single `auth.handler()` export.
-- **Password reset** uses `sendResetPassword` handler (server) + `requestPasswordReset({ email, redirectTo })` on client. The client method is `requestPasswordReset` — **not** `forgetPassword` or `forgotPassword`. Reset: `resetPassword({ newPassword, token })`.
-- **Sign out**: `authClient.signOut()` then `router.push("/")` + `router.refresh()`.
-- Env vars: `BETTER_AUTH_SECRET` (min 32 chars), `BETTER_AUTH_URL` (valid URL, no trailing slash). Both validated in `serverEnv.ts`.
-- Session cookie name: `better-auth.session_token`.
-
-## Route protection pattern
-
-Two layers:
-1. **Optimistic (middleware)** — `src/proxy.ts` checks `better-auth.session_token` cookie; redirects unauthenticated from `/dashboard` → `/`, and authenticated from auth pages → `/dashboard`.
-2. **Authoritative (layout)** — `src/app/(private)/layout.tsx` calls `auth.api.getSession({ headers: await headers() })` server-side; redirects to `/` if null.
-
-## Tailwind v4 notes
-
-- Gradient: use `bg-linear-to-b` (not `bg-gradient-to-b`).
-- Centering a block child in a grid: use `justify-self-center` on the child.
-
-## Path aliases (`tsconfig.json`)
+## Path aliases
 
 - `@/*` → `./src/*`
 - `@generated/*` → `./generated/*` (Prisma client only)
 
-## Reserved directories
+## Conventions
 
-- `src/server/` — server-only modules (server actions, anything importing `server-only`). Currently a `.gitkeep`.
-- `src/hooks/` — custom React hooks. Currently a `.gitkeep`.
-
-## Package manager
-
-- `bun.lock` is committed; Bun is the primary workflow (`bun install`, `bun <script>`). npm works (engines pin `node >=24`, `npm >=11`) but the scripts and README are written around `bun`.
-
-## Misc
-
-- ESLint ignores: `.next/**`, `out/**`, `build/**`, `next-env.d.ts`, `generated/**`.
-- `.env` is gitignored; `.env.example` is the committed template. Do not commit secrets.
-- `CHECKPOINT_DISABLE=1` is set to silence Prisma telemetry.
-- No CI workflows or pre-commit hooks exist. Pre-PR verification is `bun lint` then `bun run build` (see Verification above).
-
-## Gotchas
-
-- `typedRoutes: true` means all `<Link href>` and `router.push()` targets must exist as actual route files. A placeholder page is needed for any route that doesn't exist yet.
-- `@prisma/client` is **not** installed — the Prisma client is generated to `@generated/prisma/client` via a custom generator path. If you see `Module '"@prisma/client"' has no exported member 'PrismaClient'`, the import path needs fixing to `@generated/prisma/client`. See `dbClient.ts` for the canonical usage. Ideally, import the singleton from `@/lib/database/dbClient` instead of creating a new `PrismaClient` instance.
-- `react-hook-form` and `@hookform/resolvers` are not pre-installed; add them with `bun add react-hook-form @hookform/resolvers`.
-- Zod 4 `z.boolean().default(false)` creates an input/output type mismatch with `@hookform/resolvers` — the resolver type expects the input type (optional with `| undefined`) but `useForm<T>` uses the output type. Prefer `z.boolean()` (no default) and set the default in `defaultValues` instead.
+- `src/server/` — server-only modules (server actions, anything importing `server-only`). Individual files, no barrel index.
+- `src/hooks/` — custom React hooks.
+- `typedRoutes: true` — all `<Link href>` and `router.push()` targets must exist as actual route files.
+- Always use `bun` / `bunx` (not npm / npx).
+- Available skills for this stack: `shadcn`, `prisma-*`, `next-*`, `better-auth-*`, `vercel-react-*`, `zod`, `react-hook-form-zod`. Load via `skill` tool before writing code.
+- No CI workflows or pre-commit hooks. Only verification is `bun lint` + `bun run build`.
