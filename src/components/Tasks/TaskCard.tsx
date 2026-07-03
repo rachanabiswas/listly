@@ -1,6 +1,7 @@
 "use client";
 
 import type { Task } from "@generated/prisma/client";
+import { format } from "date-fns";
 import {
   ArrowDownIcon,
   MinusIcon,
@@ -81,7 +82,7 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
         </span>
         {task.dueDate && (
           <span className="text-xs text-muted-foreground">
-            {new Date(task.dueDate).toLocaleDateString()}
+            {format(task.dueDate, "MMM d, yyyy")}
           </span>
         )}
       </div>
@@ -116,7 +117,7 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
           title: task.title,
           description: task.description ?? "",
           priority: task.priority,
-          dueDate: task.dueDate?.toISOString().split("T")[0] ?? "",
+          dueDate: task.dueDate?.toISOString() ?? "",
         }}
         onSubmit={async (data) => {
           await onUpdate(task.id, { ...data, status: task.status });

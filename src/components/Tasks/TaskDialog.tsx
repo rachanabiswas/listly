@@ -19,7 +19,16 @@ import {
   FieldLabel,
   FieldError,
 } from "@/components/shadcnui/field";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcnui/select";
 import { Loader2 as Loader2Icon } from "lucide-react";
+import { DateTimePicker } from "./DateTimePicker";
 
 const priorityOptions: { value: TaskPriority; label: string }[] = [
   { value: "low", label: "Low" },
@@ -115,24 +124,33 @@ export const TaskDialog = ({
           <Controller
             name="priority"
             control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Priority</FieldLabel>
-                <select
-                  {...field}
-                  id={field.name}
-                  aria-invalid={fieldState.invalid}
-                  className="h-9 w-full min-w-0 rounded-3xl border border-transparent bg-input/50 px-3 py-1 text-base transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 md:text-sm"
-                >
-                  {priorityOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
+            render={({ field, fieldState }) => {
+              const priorityLabel = priorityOptions.find(
+                (opt) => opt.value === field.value,
+              )?.label;
+              return (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Priority</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Select priority">
+                        {priorityLabel}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {priorityOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              );
+            }}
           />
 
           <Controller
@@ -140,13 +158,10 @@ export const TaskDialog = ({
             control={control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Due Date</FieldLabel>
-                <Input
-                  {...field}
-                  id={field.name}
-                  type="date"
-                  aria-invalid={fieldState.invalid}
-                  autoComplete="off"
+                <FieldLabel>Due Date</FieldLabel>
+                <DateTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
                 />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>

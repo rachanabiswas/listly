@@ -9,7 +9,7 @@ type KanbanBoardProps = {
 };
 
 export const KanbanBoard = ({ initialTasks }: KanbanBoardProps) => {
-  const { tasks, createTask, updateTask, deleteTask } =
+  const { tasks, updateTask, deleteTask } =
     useTasks(initialTasks);
 
   const columns = [
@@ -26,7 +26,6 @@ export const KanbanBoard = ({ initialTasks }: KanbanBoardProps) => {
           status={status}
           label={label}
           tasks={tasks.filter((t) => t.status === status)}
-          onCreateTask={createTask}
           onUpdateTask={updateTask}
           onDeleteTask={deleteTask}
         />

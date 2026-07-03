@@ -1,11 +1,8 @@
 "use client";
 
 import type { Task } from "@generated/prisma/client";
-import { CircleIcon, ClockIcon, CheckCircle2 as CheckCircleIcon, PlusIcon } from "lucide-react";
-import { Button } from "@/components/shadcnui/button";
+import { CircleIcon, ClockIcon, CheckCircle2 as CheckCircleIcon } from "lucide-react";
 import { TaskCard } from "./TaskCard";
-import { TaskDialog } from "./TaskDialog";
-import { useState } from "react";
 
 const statusIcons = {
   todo: CircleIcon,
@@ -17,7 +14,6 @@ type KanbanColumnProps = {
   status: Task["status"];
   label: string;
   tasks: Task[];
-  onCreateTask: (data: { title: string; description?: string; priority: Task["priority"]; dueDate?: string }) => Promise<void>;
   onUpdateTask: (id: string, data: { title: string; description?: string; priority: Task["priority"]; status: Task["status"]; dueDate?: string }) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
 };
@@ -26,11 +22,9 @@ export const KanbanColumn = ({
   status,
   label,
   tasks,
-  onCreateTask,
   onUpdateTask,
   onDeleteTask,
 }: KanbanColumnProps) => {
-  const [showCreate, setShowCreate] = useState(false);
   const Icon = statusIcons[status];
 
   return (
@@ -55,24 +49,6 @@ export const KanbanColumn = ({
           />
         ))}
       </div>
-
-      <Button
-        variant="ghost"
-        className="w-full justify-start gap-2 text-muted-foreground"
-        onClick={() => setShowCreate(true)}
-      >
-        <PlusIcon className="size-4" />
-        Add task
-      </Button>
-
-      <TaskDialog
-        open={showCreate}
-        onOpenChange={setShowCreate}
-        onSubmit={async (data) => {
-          await onCreateTask(data);
-          setShowCreate(false);
-        }}
-      />
     </div>
   );
 };
