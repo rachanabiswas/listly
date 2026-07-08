@@ -18,10 +18,10 @@ import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { useState } from "react";
 
 const priorityConfig = {
-  low: { icon: ArrowDownIcon, color: "text-slate-500" },
-  medium: { icon: MinusIcon, color: "text-blue-500" },
-  high: { icon: ArrowUpIcon, color: "text-amber-500" },
-  urgent: { icon: ChevronsUpIcon, color: "text-red-500" },
+  low: { icon: ArrowDownIcon, color: "text-slate-500", cardBg: "bg-slate-100/40 dark:bg-slate-900/30" },
+  medium: { icon: MinusIcon, color: "text-indigo-500", cardBg: "bg-indigo-100/40 dark:bg-indigo-900/30" },
+  high: { icon: ArrowUpIcon, color: "text-amber-500", cardBg: "bg-amber-100/40 dark:bg-amber-900/30" },
+  urgent: { icon: ChevronsUpIcon, color: "text-rose-500", cardBg: "bg-rose-100/40 dark:bg-rose-900/30" },
 } as const;
 
 const statusOrder = ["todo", "in_progress", "done"] as const;
@@ -35,6 +35,7 @@ type TaskCardProps = {
 export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const currentIdx = statusOrder.indexOf(task.status);
   const canMoveLeft = currentIdx > 0;
@@ -51,8 +52,33 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
     });
   };
 
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.setData(
+      "text/plain",
+      JSON.stringify({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        status: task.status,
+        dueDate: task.dueDate?.toISOString() ?? null,
+      }),
+    );
+    e.dataTransfer.effectAllowed = "move";
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
   return (
-    <div className="rounded-3xl border bg-card p-3 shadow-sm">
+    <div
+      draggable
+      className={`rounded-3xl border p-3 shadow-sm ${priorityConfig[task.priority].cardBg} ${isDragging ? "opacity-50" : ""}`}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <div className="mb-2 flex items-start justify-between gap-2">
         <h3 className="text-sm font-medium">{task.title}</h3>
         <div className="flex items-center gap-1">
@@ -82,7 +108,7 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
         </span>
         {task.dueDate && (
           <span className="text-xs text-muted-foreground">
-            {format(task.dueDate, "MMM d, yyyy")}
+            {format(task.dueDate, "MMM d, yyyy h:mm aa")}
           </span>
         )}
       </div>

@@ -11,7 +11,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/shadcnui/popover";
-import { Input } from "@/components/shadcnui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcnui/select";
 
 type DateTimePickerProps = {
   value?: string;
@@ -25,9 +31,19 @@ const tryParse = (value: string | undefined): Date | undefined => {
   return isNaN(parsed.getTime()) ? undefined : parsed;
 };
 
+const hourOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+const minuteOptions = Array.from({ length: 12 }, (_, i) =>
+  (i * 5).toString().padStart(2, "0"),
+);
+
 export const DateTimePicker = ({ value, onChange, disabled }: DateTimePickerProps) => {
   const [open, setOpen] = useState(false);
   const selectedDate = useMemo(() => tryParse(value), [value]);
+
+  const hours12 = selectedDate ? selectedDate.getHours() % 12 || 12 : 12;
+  const minutes = selectedDate ? selectedDate.getMinutes() : 0;
+  const isPM = selectedDate ? selectedDate.getHours() >= 12 : false;
+  const periodLabel = isPM ? "PM" : "AM";
 
   const handleDateSelect = useCallback(
     (date: Date | undefined) => {
@@ -44,21 +60,42 @@ export const DateTimePicker = ({ value, onChange, disabled }: DateTimePickerProp
     [selectedDate, onChange],
   );
 
-  const handleTimeChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const [hours, minutes] = e.target.value.split(":").map(Number);
-      if (isNaN(hours) || isNaN(minutes)) return;
+  const handleHourChange = useCallback(
+    (hourStr: string | null) => {
+      if (!hourStr) return;
+      const hour = parseInt(hourStr, 10);
+      if (isNaN(hour)) return;
       const updated = selectedDate ? new Date(selectedDate) : new Date();
-      updated.setHours(hours, minutes);
+      const hour24 = isPM ? (hour % 12) + 12 : hour % 12;
+      updated.setHours(hour24, updated.getMinutes());
+      onChange(updated.toISOString());
+    },
+    [selectedDate, isPM, onChange],
+  );
+
+  const handleMinuteChange = useCallback(
+    (minuteStr: string | null) => {
+      if (!minuteStr) return;
+      const minute = parseInt(minuteStr, 10);
+      if (isNaN(minute)) return;
+      const updated = selectedDate ? new Date(selectedDate) : new Date();
+      updated.setHours(updated.getHours(), minute);
       onChange(updated.toISOString());
     },
     [selectedDate, onChange],
   );
 
-  const timeString = selectedDate ? format(selectedDate, "HH:mm") : "";
+  const handlePeriodToggle = useCallback(() => {
+    const updated = selectedDate ? new Date(selectedDate) : new Date();
+    const currentHours = updated.getHours();
+    updated.setHours(currentHours < 12 ? currentHours + 12 : currentHours - 12);
+    onChange(updated.toISOString());
+  }, [selectedDate, onChange]);
+
   const displayValue = selectedDate
-    ? format(selectedDate, "MMM d, yyyy HH:mm")
+    ? format(selectedDate, "MMM d, yyyy h:mm aa")
     : "";
+  const roundedMinutes = Math.round(minutes / 5) * 5;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -91,12 +128,48 @@ export const DateTimePicker = ({ value, onChange, disabled }: DateTimePickerProp
           />
           <div className="flex items-center gap-2 border-t pt-3">
             <span className="text-sm text-muted-foreground">Time</span>
-            <Input
-              type="time"
-              value={timeString}
-              onChange={handleTimeChange}
-              className="w-32"
-            />
+            <div className="flex items-center gap-1">
+              <Select
+                value={hours12.toString()}
+                onValueChange={handleHourChange}
+              >
+                <SelectTrigger size="sm" className="w-16 justify-center">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {hourOptions.map((h) => (
+                    <SelectItem key={h} value={h.toString()}>
+                      {h}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-muted-foreground">:</span>
+              <Select
+                value={roundedMinutes.toString().padStart(2, "0")}
+                onValueChange={handleMinuteChange}
+              >
+                <SelectTrigger size="sm" className="w-16 justify-center">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {minuteOptions.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handlePeriodToggle}
+                className="w-14"
+              >
+                {periodLabel}
+              </Button>
+            </div>
           </div>
         </div>
       </PopoverContent>

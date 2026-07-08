@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Task } from "@generated/prisma/client";
 import { CircleIcon, ClockIcon, CheckCircle2 as CheckCircleIcon } from "lucide-react";
 import { TaskCard } from "./TaskCard";
@@ -8,6 +9,24 @@ const statusIcons = {
   todo: CircleIcon,
   in_progress: ClockIcon,
   done: CheckCircleIcon,
+} as const;
+
+const statusColors = {
+  todo: {
+    bg: "bg-gray-100/40 dark:bg-gray-900/30",
+    text: "text-gray-500 dark:text-gray-400",
+    badge: "bg-gray-200/60 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400",
+  },
+  in_progress: {
+    bg: "bg-amber-100/40 dark:bg-amber-900/30",
+    text: "text-amber-600 dark:text-amber-400",
+    badge: "bg-amber-200/60 dark:bg-amber-800/50 text-amber-600 dark:text-amber-400",
+  },
+  done: {
+    bg: "bg-green-100/40 dark:bg-green-900/30",
+    text: "text-green-600 dark:text-green-400",
+    badge: "bg-green-200/60 dark:bg-green-800/50 text-green-600 dark:text-green-400",
+  },
 } as const;
 
 type KanbanColumnProps = {
@@ -26,14 +45,64 @@ export const KanbanColumn = ({
   onDeleteTask,
 }: KanbanColumnProps) => {
   const Icon = statusIcons[status];
+  const color = statusColors[status];
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const raw = e.dataTransfer.getData("text/plain");
+    if (!raw) return;
+
+    const data = JSON.parse(raw) as {
+      id: string;
+      title: string;
+      description: string | null;
+      priority: Task["priority"];
+      status: Task["status"];
+      dueDate: string | null;
+    };
+
+    if (data.id && data.status !== status) {
+      onUpdateTask(data.id, {
+        title: data.title,
+        description: data.description ?? undefined,
+        priority: data.priority,
+        status,
+        dueDate: data.dueDate ?? undefined,
+      });
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-4 rounded-4xl bg-muted/50 p-4">
+    <div
+      className={`flex flex-col gap-4 rounded-4xl p-4 transition-colors ${color.bg} ${isDragOver ? "ring-2 ring-primary/40" : ""}`}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Icon className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-medium">{label}</h2>
-          <span className="flex size-5 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+          <Icon className={`size-4 ${color.text}`} />
+          <h2 className={`text-sm font-medium ${color.text}`}>{label}</h2>
+          <span className={`flex size-5 items-center justify-center rounded-full text-xs font-medium ${color.badge}`}>
             {tasks.length}
           </span>
         </div>
