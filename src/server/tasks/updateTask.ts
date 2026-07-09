@@ -30,7 +30,7 @@ export const updateTask = async (id: string, data: unknown) => {
     throw new Error("Invalid data");
   }
 
-  const { title, description, priority, status, dueDate } = parsed.data;
+  const { title, description, priority, status, dueDate, remindAt } = parsed.data;
 
   const task = await prisma.task.update({
     where: { id },
@@ -40,6 +40,7 @@ export const updateTask = async (id: string, data: unknown) => {
       priority,
       status,
       dueDate: dueDate ? new Date(dueDate) : null,
+      remindAt: remindAt ? new Date(remindAt) : null,
     },
   });
 

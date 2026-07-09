@@ -11,11 +11,19 @@ import {
   ChevronRightIcon,
   PencilIcon,
   Trash2Icon,
+  BellIcon,
 } from "lucide-react";
 import { Button } from "@/components/shadcnui/button";
 import { TaskDialog } from "./TaskDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { useState } from "react";
+
+const accentBorderColors: Record<Task["priority"], string | undefined> = {
+  low: "#34d399",
+  medium: undefined,
+  high: "#f87171",
+  urgent: "#f87171",
+};
 
 const priorityConfig = {
   low: { icon: ArrowDownIcon, color: "text-slate-500", cardBg: "bg-slate-100/40 dark:bg-slate-900/30" },
@@ -28,7 +36,7 @@ const statusOrder = ["todo", "in_progress", "done"] as const;
 
 type TaskCardProps = {
   task: Task;
-  onUpdate: (id: string, data: { title: string; description?: string; priority: Task["priority"]; status: Task["status"]; dueDate?: string }) => Promise<void>;
+  onUpdate: (id: string, data: { title: string; description?: string; priority: Task["priority"]; status: Task["status"]; dueDate?: string; remindAt?: string }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 };
 
@@ -49,6 +57,7 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
       priority: task.priority,
       status: statusOrder[newIdx],
       dueDate: task.dueDate?.toISOString() ?? undefined,
+      remindAt: task.remindAt?.toISOString() ?? undefined,
     });
   };
 
@@ -62,6 +71,7 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
         priority: task.priority,
         status: task.status,
         dueDate: task.dueDate?.toISOString() ?? null,
+        remindAt: task.remindAt?.toISOString() ?? null,
       }),
     );
     e.dataTransfer.effectAllowed = "move";
@@ -72,10 +82,13 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
     setIsDragging(false);
   };
 
+  const accentColor = accentBorderColors[task.priority];
+
   return (
     <div
       draggable
       className={`rounded-3xl border p-3 shadow-sm ${priorityConfig[task.priority].cardBg} ${isDragging ? "opacity-50" : ""}`}
+      style={accentColor ? { borderLeftColor: accentColor, borderLeftWidth: "3px" } : undefined}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -111,6 +124,11 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
             {format(task.dueDate, "MMM d, yyyy h:mm aa")}
           </span>
         )}
+        {task.remindAt && (
+          <span className="flex items-center gap-1 text-xs text-amber-500" title={`Reminder: ${format(task.remindAt, "MMM d, yyyy h:mm aa")}`}>
+            <BellIcon className="size-3" />
+          </span>
+        )}
       </div>
 
       {task.description && (
@@ -144,6 +162,7 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
           description: task.description ?? "",
           priority: task.priority,
           dueDate: task.dueDate?.toISOString() ?? "",
+          remindAt: task.remindAt?.toISOString() ?? "",
         }}
         onSubmit={async (data) => {
           await onUpdate(task.id, { ...data, status: task.status });

@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcnui/select";
-import { Loader2 as Loader2Icon } from "lucide-react";
+import { Loader2 as Loader2Icon, BellIcon } from "lucide-react";
 import { DateTimePicker } from "./DateTimePicker";
 
 const priorityOptions: { value: TaskPriority; label: string }[] = [
@@ -159,6 +159,26 @@ export const TaskDialog = ({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel>Due Date</FieldLabel>
+                <DateTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="remindAt"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>
+                  <span className="flex items-center gap-1">
+                    <BellIcon className="size-3" />
+                    Remind Me
+                  </span>
+                </FieldLabel>
                 <DateTimePicker
                   value={field.value}
                   onChange={field.onChange}

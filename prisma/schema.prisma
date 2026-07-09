@@ -51,6 +51,7 @@ model Task {
   status      TaskStatus    @default(todo)
   priority    TaskPriority  @default(medium)
   dueDate     DateTime?
+  remindAt    DateTime?
   userId      String
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime      @default(now())

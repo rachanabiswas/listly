@@ -20,7 +20,7 @@ export const createTask = async (data: unknown) => {
     throw new Error("Invalid data");
   }
 
-  const { title, description, priority, dueDate } = parsed.data;
+  const { title, description, priority, dueDate, remindAt } = parsed.data;
 
   const task = await prisma.task.create({
     data: {
@@ -28,6 +28,7 @@ export const createTask = async (data: unknown) => {
       description,
       priority,
       dueDate: dueDate ? new Date(dueDate) : null,
+      remindAt: remindAt ? new Date(remindAt) : null,
       userId: session.user.id,
     },
   });

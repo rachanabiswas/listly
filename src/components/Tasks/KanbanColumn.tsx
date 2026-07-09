@@ -33,7 +33,7 @@ type KanbanColumnProps = {
   status: Task["status"];
   label: string;
   tasks: Task[];
-  onUpdateTask: (id: string, data: { title: string; description?: string; priority: Task["priority"]; status: Task["status"]; dueDate?: string }) => Promise<void>;
+  onUpdateTask: (id: string, data: { title: string; description?: string; priority: Task["priority"]; status: Task["status"]; dueDate?: string; remindAt?: string }) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
 };
 

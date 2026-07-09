@@ -47,6 +47,7 @@ export const taskFormSchema = z.object({
   description: z.string().optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]),
   dueDate: z.string().optional(),
+  remindAt: z.string().optional(),
 });
 
 export type TaskFormType = z.infer<typeof taskFormSchema>;

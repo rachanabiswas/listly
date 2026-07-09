@@ -18,6 +18,7 @@ export const useTasks = (initialTasks: Task[]) => {
         priority: Task["priority"];
         status: Task["status"];
         dueDate?: string;
+        remindAt?: string;
       },
     ) => {
       setIsLoading(true);
