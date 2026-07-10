@@ -2,6 +2,7 @@
 
 import type { Task } from "@generated/prisma/client";
 import { useTasks } from "@/hooks/useTasks";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { KanbanColumn } from "./KanbanColumn";
 
 type KanbanBoardProps = {
@@ -11,6 +12,8 @@ type KanbanBoardProps = {
 export const KanbanBoard = ({ initialTasks }: KanbanBoardProps) => {
   const { tasks, updateTask, deleteTask } =
     useTasks(initialTasks);
+
+  useAutoScroll();
 
   const columns = [
     { status: "todo" as const, label: "Todo" },

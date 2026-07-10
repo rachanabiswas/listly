@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Stack
 
-Next.js 16.2 + React 19.2 (App Router, Turbopack, React Compiler on, `typedRoutes` on) · Prisma 7 + libSQL/SQLite · Tailwind v4 (CSS-only, no `tailwind.config.ts`) · shadcn/ui with `base-luma` style preset + `@base-ui/react` primitives (not Radix) · `next-themes` (default `dark`, `enableSystem={false}`) · `better-auth` 1.6.20 · `@t3-oss/env-nextjs` + Zod 4.
+Next.js 16.2 + React 19.2 (App Router, Turbopack, `reactCompiler: true`, `typedRoutes: true`) · Prisma 7 + libSQL/SQLite · Tailwind v4 (CSS-only, no `tailwind.config.ts`) · shadcn/ui with `base-luma` style preset + `@base-ui/react` primitives (not Radix) · `next-themes` (default `dark`, `enableSystem={false}`) · `better-auth` 1.6.20 · `@t3-oss/env-nextjs` + Zod 4.
 
 ## Commands
 
@@ -16,12 +16,13 @@ Next.js 16.2 + React 19.2 (App Router, Turbopack, React Compiler on, `typedRoute
 |---|---|
 | `bun dev` | Start dev server (Turbopack) |
 | `bun lint` | ESLint with `eslint-config-next` core-web-vitals + typescript |
-| `bun run build` | `prisma generate && next build` — TypeScript errors surface here |
+| `bun typecheck` | `next typegen && tsc --noEmit` — use for fast type checking |
+| `bun run build` | `prisma generate && next build` |
 | `bun prod` | Full: `prisma generate && eslint && next build && next start` |
 | `bun migrate` | `prisma migrate dev && prisma generate` |
 | `bun studio` | Headless Prisma Studio (`--browser none`); open printed URL manually |
 
-Pre-PR verification: `bun lint` then `bun run build`. No test framework exists.
+Pre-PR verification: `bun lint` then `bun typecheck`. No test framework exists.
 
 ## Prisma (v7, custom output)
 
@@ -101,4 +102,4 @@ Each field through `Controller` with `Field data-invalid`, `FieldLabel`, `aria-i
 - `typedRoutes: true` — all `<Link href>` and `router.push()` targets must exist as actual route files.
 - Always use `bun` / `bunx` (not npm / npx).
 - Available skills for this stack: `shadcn`, `prisma-*`, `next-*`, `better-auth-*`, `vercel-react-*`, `zod`, `react-hook-form-zod`. Load via `skill` tool before writing code.
-- No CI workflows or pre-commit hooks. Only verification is `bun lint` + `bun run build`.
+- No CI workflows or pre-commit hooks. Only verification is `bun lint` + `bun typecheck`.

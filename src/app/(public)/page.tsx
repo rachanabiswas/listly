@@ -21,8 +21,8 @@ const LoginPage = () => {
     <section className="grid min-h-dvh place-items-center px-4">
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="items-center text-center">
-          <span className="bg-primary/10 ring-foreground/5 mb-2 flex size-12 items-center justify-center justify-self-center rounded-2xl ring-1">
-            <ListChecks className="text-primary size-6" />
+          <span className="mb-2 flex size-12 items-center justify-center justify-self-center rounded-2xl bg-rose-100/60 ring-1 ring-foreground/5 dark:bg-rose-900/40">
+            <ListChecks className="size-6 text-rose-600 dark:text-rose-400" />
           </span>
           <CardTitle className="text-xl">Welcome back</CardTitle>
           <CardDescription>Sign in to your account to continue</CardDescription>
@@ -37,7 +37,7 @@ const LoginPage = () => {
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="text-primary font-medium underline-offset-4 hover:underline">
+              className="font-medium text-rose-600 underline-offset-4 hover:underline dark:text-rose-400">
               Sign up
             </Link>
           </p>

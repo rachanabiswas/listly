@@ -51,3 +51,10 @@ export const taskFormSchema = z.object({
 });
 
 export type TaskFormType = z.infer<typeof taskFormSchema>;
+
+export const profileFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  image: z.string().optional(),
+});
+
+export type ProfileFormType = z.infer<typeof profileFormSchema>;

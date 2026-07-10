@@ -13,19 +13,22 @@ const statusIcons = {
 
 const statusColors = {
   todo: {
-    bg: "bg-gray-100/40 dark:bg-gray-900/30",
+    bg: "bg-gray-100/70 dark:bg-gray-900/70",
     text: "text-gray-500 dark:text-gray-400",
     badge: "bg-gray-200/60 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400",
+    border: "border-gray-200/60 dark:border-gray-700/50",
   },
   in_progress: {
-    bg: "bg-amber-100/40 dark:bg-amber-900/30",
+    bg: "bg-amber-100/70 dark:bg-amber-900/70",
     text: "text-amber-600 dark:text-amber-400",
     badge: "bg-amber-200/60 dark:bg-amber-800/50 text-amber-600 dark:text-amber-400",
+    border: "border-amber-200/60 dark:border-amber-700/50",
   },
   done: {
-    bg: "bg-green-100/40 dark:bg-green-900/30",
+    bg: "bg-green-100/70 dark:bg-green-900/70",
     text: "text-green-600 dark:text-green-400",
     badge: "bg-green-200/60 dark:bg-green-800/50 text-green-600 dark:text-green-400",
+    border: "border-green-200/60 dark:border-green-700/50",
   },
 } as const;
 
@@ -92,7 +95,7 @@ export const KanbanColumn = ({
 
   return (
     <div
-      className={`flex flex-col gap-4 rounded-4xl p-4 transition-colors ${color.bg} ${isDragOver ? "ring-2 ring-primary/40" : ""}`}
+      className={`flex flex-col gap-4 rounded-4xl border p-4 transition-colors ${color.border} ${color.bg} ${isDragOver ? "ring-2 ring-primary/40" : ""}`}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}

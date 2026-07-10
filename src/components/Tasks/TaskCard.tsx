@@ -18,18 +18,11 @@ import { TaskDialog } from "./TaskDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { useState } from "react";
 
-const accentBorderColors: Record<Task["priority"], string | undefined> = {
-  low: "#34d399",
-  medium: undefined,
-  high: "#f87171",
-  urgent: "#f87171",
-};
-
 const priorityConfig = {
-  low: { icon: ArrowDownIcon, color: "text-slate-500", cardBg: "bg-slate-100/40 dark:bg-slate-900/30" },
-  medium: { icon: MinusIcon, color: "text-indigo-500", cardBg: "bg-indigo-100/40 dark:bg-indigo-900/30" },
-  high: { icon: ArrowUpIcon, color: "text-amber-500", cardBg: "bg-amber-100/40 dark:bg-amber-900/30" },
-  urgent: { icon: ChevronsUpIcon, color: "text-rose-500", cardBg: "bg-rose-100/40 dark:bg-rose-900/30" },
+  low: { icon: ArrowDownIcon, color: "text-emerald-600 dark:text-emerald-400", border: "border-l-emerald-400", badge: "bg-slate-100 text-slate-600 dark:bg-slate-900/60 dark:text-slate-400" },
+  medium: { icon: MinusIcon, color: "text-emerald-700 dark:text-emerald-500", border: "border-l-emerald-500", badge: "bg-blue-100 text-blue-600 dark:bg-blue-900/60 dark:text-blue-400" },
+  high: { icon: ArrowUpIcon, color: "text-red-600 dark:text-red-400", border: "border-l-red-400", badge: "bg-amber-100 text-amber-600 dark:bg-amber-900/60 dark:text-amber-400" },
+  urgent: { icon: ChevronsUpIcon, color: "text-red-700 dark:text-red-500", border: "border-l-red-500", badge: "bg-red-100 text-red-600 dark:bg-red-900/60 dark:text-red-400" },
 } as const;
 
 const statusOrder = ["todo", "in_progress", "done"] as const;
@@ -82,13 +75,10 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
     setIsDragging(false);
   };
 
-  const accentColor = accentBorderColors[task.priority];
-
   return (
     <div
       draggable
-      className={`rounded-3xl border p-3 shadow-sm ${priorityConfig[task.priority].cardBg} ${isDragging ? "opacity-50" : ""}`}
-      style={accentColor ? { borderLeftColor: accentColor, borderLeftWidth: "3px" } : undefined}
+      className={`rounded-3xl border border-l-4 bg-card p-3 shadow-sm ${priorityConfig[task.priority].border} ${isDragging ? "opacity-50" : ""}`}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -115,7 +105,7 @@ export const TaskCard = ({ task, onUpdate, onDelete }: TaskCardProps) => {
       </div>
 
       <div className="flex items-center gap-2">
-        <span className={`inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs ${priorityConfig[task.priority].color}`}>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${priorityConfig[task.priority].badge}`}>
           <PriorityIcon className="size-3" />
           {task.priority}
         </span>

@@ -38,7 +38,15 @@ const UserMenu = () => {
       <DropdownMenuTrigger
         render={
           <Button variant="ghost" size="icon-sm">
-            <UserIcon className="size-4" />
+            {session.user.image ? (
+              <img
+                src={session.user.image}
+                alt={session.user.name}
+                className="size-4 rounded-full object-cover"
+              />
+            ) : (
+              <UserIcon className="size-4" />
+            )}
           </Button>
         }
       />
@@ -46,9 +54,22 @@ const UserMenu = () => {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium">{session.user.name}</p>
-            <p className="text-xs text-muted-foreground">{session.user.email}</p>
+          <div className="flex items-center gap-3">
+            {session.user.image ? (
+              <img
+                src={session.user.image}
+                alt={session.user.name}
+                className="size-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex size-10 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+                {session.user.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium">{session.user.name}</p>
+              <p className="text-xs text-muted-foreground">{session.user.email}</p>
+            </div>
           </div>
         </DropdownMenuLabel>
         </DropdownMenuGroup>
@@ -60,6 +81,15 @@ const UserMenu = () => {
             <Link href="/dashboard" className="flex items-center gap-2.5">
               <LayoutDashboardIcon className="size-4" />
               Dashboard
+            </Link>
+          }
+        />
+
+        <DropdownMenuItem
+          render={
+            <Link href="/profile" className="flex items-center gap-2.5">
+              <UserIcon className="size-4" />
+              Profile
             </Link>
           }
         />
