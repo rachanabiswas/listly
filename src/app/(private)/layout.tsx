@@ -12,7 +12,7 @@ const PrivateLayout = async ({ children }: LayoutProps) => {
 
   return (
     <>
-      <Header />
+      <Header session={session} />
 
       <main className="mx-auto max-w-7xl pt-16">{children}</main>
     </>

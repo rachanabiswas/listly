@@ -1,9 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { LayoutDashboardIcon, LogOutIcon, UserIcon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import type { Session } from "@/lib/auth";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -15,17 +17,12 @@ import {
 } from "@/components/shadcnui/dropdown-menu";
 import { Button } from "@/components/shadcnui/button";
 
-const UserMenu = () => {
-  const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+interface UserMenuProps {
+  session: Session;
+}
 
-  if (isPending || !session) {
-    return (
-      <Button variant="ghost" size="icon-sm" disabled>
-        <UserIcon className="size-4" />
-      </Button>
-    );
-  }
+const UserMenu = ({ session }: UserMenuProps) => {
+  const router = useRouter();
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -37,48 +34,59 @@ const UserMenu = () => {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon-sm">
-            {session.user.image ? (
-              <img
+          <Button
+            variant="ghost"
+            size="icon-sm">
+            {session.user.image ?
+              <Image
                 src={session.user.image}
                 alt={session.user.name}
+                width={16}
+                height={16}
                 className="size-4 rounded-full object-cover"
+                unoptimized
               />
-            ) : (
-              <UserIcon className="size-4" />
-            )}
+            : <UserIcon className="size-4" />}
           </Button>
         }
       />
 
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent
+        align="end"
+        className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-normal">
-          <div className="flex items-center gap-3">
-            {session.user.image ? (
-              <img
-                src={session.user.image}
-                alt={session.user.name}
-                className="size-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex size-10 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-                {session.user.name.charAt(0).toUpperCase()}
+            <div className="flex items-center gap-3">
+              {session.user.image ?
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name}
+                  width={40}
+                  height={40}
+                  className="size-10 rounded-full object-cover"
+                  unoptimized
+                />
+              : <div className="bg-muted text-muted-foreground flex size-10 items-center justify-center rounded-full text-sm font-semibold">
+                  {session.user.name.charAt(0).toUpperCase()}
+                </div>
+              }
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium">{session.user.name}</p>
+                <p className="text-muted-foreground text-xs">
+                  {session.user.email}
+                </p>
               </div>
-            )}
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium">{session.user.name}</p>
-              <p className="text-xs text-muted-foreground">{session.user.email}</p>
             </div>
-          </div>
-        </DropdownMenuLabel>
+          </DropdownMenuLabel>
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
           render={
-            <Link href="/dashboard" className="flex items-center gap-2.5">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2.5">
               <LayoutDashboardIcon className="size-4" />
               Dashboard
             </Link>
@@ -87,7 +95,9 @@ const UserMenu = () => {
 
         <DropdownMenuItem
           render={
-            <Link href="/profile" className="flex items-center gap-2.5">
+            <Link
+              href="/profile"
+              className="flex items-center gap-2.5">
               <UserIcon className="size-4" />
               Profile
             </Link>
@@ -98,8 +108,7 @@ const UserMenu = () => {
 
         <DropdownMenuItem
           variant="destructive"
-          onClick={handleSignOut}
-        >
+          onClick={handleSignOut}>
           <LogOutIcon className="size-4" />
           Sign out
         </DropdownMenuItem>

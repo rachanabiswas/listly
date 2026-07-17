@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { Metadata } from "next";
+import { PlusIcon } from "lucide-react";
 import { getServerSession } from "@/server/getServerSession";
 import prisma from "@/lib/database/dbClient";
 import { KanbanBoard } from "@/components/Tasks/KanbanBoard";
@@ -23,6 +25,12 @@ const DashboardPage = async () => {
     <section className="py-8">
       <ReminderBar tasks={remindedTasks} />
       <KanbanBoard initialTasks={tasks} />
+
+      <Link
+        href="/tasks/create"
+        className="bg-primary text-primary-foreground hover:bg-primary/90 fixed right-6 bottom-6 z-50 flex size-14 items-center justify-center rounded-full shadow-lg transition">
+        <PlusIcon className="size-6" />
+      </Link>
     </section>
   );
 };
